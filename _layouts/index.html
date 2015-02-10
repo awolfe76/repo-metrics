@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard Prototype</title>
+    <meta name="description" content="">
+    <script type="text/javascript">
+    // Confirm availability of JS and remove no-js class from html
+    var docElement = document.documentElement;
+    docElement.className = docElement.className.replace(/(^|\s)no-js(\s|$)/, '$1$2');
+    </script>
+</head>
+<style>
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+.box {
+    border: 1px solid #ddd;
+    border-radius: 2px;
+    float: left;
+    margin: 1%;
+    padding: 20px;
+    width: 23%;
+}
+.box pre {
+    overflow-x: scroll;
+}
+</style>
+
+<body>
+    <div class="box">
+        <h1>Milestones JSON</h1>
+        <pre id="js-milestones"></pre>
+    </div>
+    <div class="box">
+        <h1>Milestones HTML</h1>
+        <div id="js-milestones-html"></div>
+    </div>
+    <div class="box">
+        <h1>Issues JSON</h1>
+        <pre id="js-issues"></pre>
+    </div>
+    <div class="box">
+        <h1>Milestones with Issues HTML</h1>
+        <div id="js-issues-html"></div>
+    </div>
+
+
+    <script src="{{ site.baseurl }}/js/vendor/jquery-2.1.3.min.js"></script>
+    <script>
+    $(function() {
+        var githubAPI = 'https://api.github.com/';
+        var githubURL = 'https://github.com/'
+        var githubRepo = '{{ site.baseurl }}'.replace('/', '');
+        console.log ( 'repo = ' + githubRepo );
+        var githubOwner = '{{ site.githubOwner }}'
+        console.log ( 'owner = ' + githubOwner );
+        var saveMilestone = 0;
+
+        // get milestones
+        // GET /repos/:owner/:repo/milestones
+        // TODO - this works but don't want to make repeated calls to the github api, so the json string below will work for testing
+        $.get( githubAPI + 'repos/' + githubOwner + '/' + githubRepo + '/milestones', function( milestones ) {
+            
+        })
+        .done( function( milestones ) {
+            // json for milestones
+            $( "#js-milestones" ).html( JSON.stringify( milestones, undefined, 4 ) );
+            // get issues
+            // GET /repos/:owner/:repo/issues?milestone=x
+            // accepts a milestone parameter (int in our case)
+            console.log( 'im done' );
+            console.log ( milestones );
+            $.each( milestones, function( index, milestone ) {
+                //console.log( index );
+                console.log( 'the milestone number (id) is = ' + milestone.number );
+                // HTML for milestones
+                // milestone urls = https://github.com/[user]/[repo]/milestones/[milestone name]
+                $( "#js-milestones-html" ).append( '<a href="' + githubURL + githubOwner + '/' + githubRepo + '/milestones/' + milestone.title + '"><h1>' + milestone.title + '</h1></a>');
+                $( "#js-milestones-html" ).append( '<p>' + milestone.description + '</p>');
+                $.get( githubAPI + 'repos/' + githubOwner + '/' + githubRepo + '/issues?milestone=' + milestone.number, function( issues ) {
+
+                })
+                .done( function( issues ) {
+                    // json for issues, with milestones
+                    $( "#js-issues" ).append( JSON.stringify( issues, undefined, 4 ) );
+                    $( "#js-issues" ).append( '<br><br><br>' );
+                    $.each( issues, function( index, issue ) {
+                        console.log( 'milestone for this issue = ' + issue.milestone.number );
+                        if ( saveMilestone != issue.milestone.number ) {
+                            saveMilestone = issue.milestone.number;
+                            $( "#js-issues-html" ).append( '<a href="' + githubURL + githubOwner + '/' + githubRepo + '/milestones/' + milestone.title + '"><h1>' + milestone.title + '</h1></a>');
+                            $( "#js-issues-html" ).append( '<p>' + milestone.description + '</p>');
+                        }
+                        // issue urls = https://github.com/[user]/[repo]/issues/[number]
+                        $( "#js-issues-html" ).append( '<a href="' + githubURL + githubOwner + '/' + githubRepo + '/issues/' + issue.number + '"><h3>' + issue.title + '</h3></a>');
+                        $( "#js-issues-html" ).append( '<p>' + issue.body + '</p>');
+                    });
+                });
+            });
+        });
+
+        // using to test to save calls to github api
+        /*var json = [{"url":"https://api.github.com/repos/awolfe76/dashboard/milestones/1","labels_url":"https://api.github.com/repos/awolfe76/dashboard/milestones/1/labels","id":962689,"number":1,"title":"Work Stream 1","description":"This is work stream 1","creator":{"login":"awolfe76","id":2932572,"avatar_url":"https://avatars.githubusercontent.com/u/2932572?v=3","gravatar_id":"","url":"https://api.github.com/users/awolfe76","html_url":"https://github.com/awolfe76","followers_url":"https://api.github.com/users/awolfe76/followers","following_url":"https://api.github.com/users/awolfe76/following{/other_user}","gists_url":"https://api.github.com/users/awolfe76/gists{/gist_id}","starred_url":"https://api.github.com/users/awolfe76/starred{/owner}{/repo}","subscriptions_url":"https://api.github.com/users/awolfe76/subscriptions","organizations_url":"https://api.github.com/users/awolfe76/orgs","repos_url":"https://api.github.com/users/awolfe76/repos","events_url":"https://api.github.com/users/awolfe76/events{/privacy}","received_events_url":"https://api.github.com/users/awolfe76/received_events","type":"User","site_admin":false},"open_issues":2,"closed_issues":0,"state":"open","created_at":"2015-02-03T00:26:03Z","updated_at":"2015-02-03T00:27:28Z","due_on":"2015-02-28T05:00:00Z","closed_at":null},{"url":"https://api.github.com/repos/awolfe76/dashboard/milestones/2","labels_url":"https://api.github.com/repos/awolfe76/dashboard/milestones/2/labels","id":962691,"number":2,"title":"Work Stream 2","description":"This is work stream 2.","creator":{"login":"awolfe76","id":2932572,"avatar_url":"https://avatars.githubusercontent.com/u/2932572?v=3","gravatar_id":"","url":"https://api.github.com/users/awolfe76","html_url":"https://github.com/awolfe76","followers_url":"https://api.github.com/users/awolfe76/followers","following_url":"https://api.github.com/users/awolfe76/following{/other_user}","gists_url":"https://api.github.com/users/awolfe76/gists{/gist_id}","starred_url":"https://api.github.com/users/awolfe76/starred{/owner}{/repo}","subscriptions_url":"https://api.github.com/users/awolfe76/subscriptions","organizations_url":"https://api.github.com/users/awolfe76/orgs","repos_url":"https://api.github.com/users/awolfe76/repos","events_url":"https://api.github.com/users/awolfe76/events{/privacy}","received_events_url":"https://api.github.com/users/awolfe76/received_events","type":"User","site_admin":false},"open_issues":2,"closed_issues":0,"state":"open","created_at":"2015-02-03T00:26:21Z","updated_at":"2015-02-03T00:33:07Z","due_on":"2015-03-01T05:00:00Z","closed_at":null}];
+
+        //$( "#js-milestones" ).html( JSON.stringify( json ));
+        $.each( json, function( index, milestone ) {
+            console.log( index );
+            console.log( milestone.url );
+            $( "#js-milestones" ).append( '<a href="' + milestone.url + '"><h1>' + milestone.title + '</h1></a>');
+            $( "#js-milestones" ).append( '<p>' + milestone.description + '</p>');
+        });*/
+
+
+    });
+    </script>
+</body>
+</html>
